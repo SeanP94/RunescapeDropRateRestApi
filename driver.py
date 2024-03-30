@@ -1,4 +1,4 @@
 import osrsWikiAPI as osrs
 
-osrs.testLaunch()
-
+# osrs.testLaunch()
+osrs.itemDatabase()

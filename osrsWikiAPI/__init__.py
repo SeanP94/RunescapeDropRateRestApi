@@ -1,6 +1,24 @@
 import requests
 import pandas as pd
 import os
+from datetime import datetime
+
+'''
+Functionality of this library:
+
+[X] Get new items from APi
+[X] Find Item in API  
+[ ] Get item data from API  
+[ ] Get last X days from API...         ##                     ### Here
+[ ] Store item data from API & possible ^^
+[ ] Get last X days from SQLTable and what I dont have ask API ^^^
+
+
+
+
+'''
+
+
 
 CURR_DIR = os.path.abspath(__file__).replace('__init__.py', '')
 
@@ -87,3 +105,40 @@ def itemInDatabase(itemName:str):
     if (len(val)):
         return val.values[0][1]
     return -1
+
+def searchSqlForItems(itemName:str):
+    '''
+    This function will be built when Postgres is implemented.
+    It will use full text search, a feature of Postgres to search for 
+    the item and return back possible solutions.
+    '''
+    pass
+
+def itemName(itemKey:str):
+    '''
+    Might not need this if I work with objects but just in case I need it lol.
+    '''
+    global GLOBAL_DF
+    val = GLOBAL_DF[GLOBAL_DF['api_id'] == int(itemKey)]
+    if (len(val)):
+        return val.values[0][0]
+    return -1
+
+def getItemData(itemKey:str) :
+    url = f'https://prices.runescape.wiki/api/v1/osrs/latest/?id={itemKey}'
+    response = requests.get(url, headers=HEADERS)
+
+    print(response.status_code)
+    print(response.json()['data'][itemKey])
+    return response.json()['data'][itemKey]
+
+def currItemFormat(itemKey:str, itemData: dict):
+    '''
+    Used to just format what I anticipate. the output should be.
+    '''
+    highTime = datetime.fromtimestamp(itemData['highTime'])
+    lowTime = datetime.fromtimestamp(itemData['lowTime'])
+    
+    print(f"Item: {itemName(itemKey)}".ljust(50))
+    print(f"Item: {itemData['high']} gp High at {highTime}".ljust(100))
+    print(f"Item: {itemData['low']} gp Low at {lowTime}".ljust(100))

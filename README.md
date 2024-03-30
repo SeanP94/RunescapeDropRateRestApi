@@ -1,8 +1,11 @@
 # RunescapeDropRateRestApi
 An API project for interacting with the OSRS Wiki for boss drops.
 
+
+# Get Main Project
 https://oldschool.runescape.wiki/w/RuneScape:Real-time_Prices
 
-https://runescape.wiki/w/Application_programming_interface
 
-https://runescape.wiki/w/Help:APIs
+
+# Figure out the Ask APi for boss drop stuff later?
+https://oldschool.runescape.wiki/w/Special:ApiSandbox#action=ask&format=json&query=%5B%5BCategory%3AItems%5D%5D%5B%5BAll%20Item%20ID%3A%3A%2B%5D%5D%7C%3FAll%20Item%20ID%7C%3FCategory%7Climit%3D10&formatversion=2

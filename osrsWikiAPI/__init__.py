@@ -13,46 +13,40 @@ Functionality of this library:
 [ ] Store item data from API & possible ^^
 [ ] Get last X days from SQLTable and what I dont have ask API ^^^
 
-
-
-
 '''
 
-
-
 CURR_DIR = os.path.abspath(__file__).replace('__init__.py', '')
-
-ItemsTable = None
-GLOBAL_DF = None # This will be used for now, will replace with SQL in Django
-
+ITEMS = None # This will be used for now, will replace with SQL in Django
 
 HEADERS = {
     'user-agent' : "Monster Drop Rates(Resume Project)", # OSRS Wiki requests you set this so they know why you're scrapping. 
 }
 
-def itemDatabase():
+# Setups
+def itemTableSetup():
     '''
     Creates the table for the Items table.
-    ['item', 'api_id']
-    Where item is the name of the item, and api_id is the id that the rest of the api uses.
+    ['item', 'id']
+    Where item is the name of the item, and id is the id that the rest of the api uses.
 
     ### Until Django is implemented this will feed into a csv. ###
       
     '''
 
-
-    ''' Uncomment this when you want to work on the API call again. Stop pinging them lol
+    #Uncomment this when you want to work on the API call again. Stop pinging them lol
     
-    url = 'https://oldschool.runescape.wiki/?title=Module:GEIDs/data.json&action=raw&ctype=application%2Fjson'
+    # url = 'https://oldschool.runescape.wiki/?title=Module:GEIDs/data.json&action=raw&ctype=application%2Fjson'
+    url = 'https://prices.runescape.wiki/api/v1/osrs/mapping'
     out = requests.get(url, headers=HEADERS)
     
-    newItemsTable = pd.DataFrame.from_dict(out.json(), orient='index') \
-                                .reset_index() \
-                                .rename(columns={'index':'item', 0:'api_id'}) \
+    # newItemsTable = pd.DataFrame.from_dict(out.json(), orient='index') \
+    #                             .reset_index() \
+    #                             .rename(columns={'index':'item', 0:'id'}) \
     
-    newItemsTable['check item'] = newItemsTable['item'].str.lower()
+    newItemsTable = pd.DataFrame.from_dict(out.json())
+    newItemsTable['name_check'] = newItemsTable['name'].str.lower()
     # Remove the LAST_UPDATE and LAST_UPDATE_F
-    newItemsTable.drop(index=[0,1],inplace=True)
+    # newItemsTable.drop(index=[0,1],inplace=True)
 
     ###############################################
     ### Code until SQL is implemented in Django ###
@@ -60,53 +54,66 @@ def itemDatabase():
     # Dump if file doesnt exist.
 
     # This part will be replaced by reading in SQL not CSV
-    if (not os.path.exists(CURR_DIR + 'db/table.csv')):
-        newItemsTable.to_csv(CURR_DIR + 'db/table.csv', index=False)
+    if (not os.path.exists(CURR_DIR + 'db/items.csv')):
+        newItemsTable.to_csv(CURR_DIR + 'db/items.csv', index=False)
         itemsTable = newItemsTable.copy()
     else:
-        itemsTable = pd.read_csv(CURR_DIR + 'db/table.csv')
+        itemsTable = pd.read_csv(CURR_DIR + 'db/items.csv')
     newItemsTable = newItemsTable.copy()
-    '''
+    
+
     # Temp code, so I stop calling API on every run.. ###
-    itemsTable = pd.read_csv(CURR_DIR + 'db/table.csv') #
-    newItemsTable = itemsTable.copy()                   #
+    # itemsTable = pd.read_csv(CURR_DIR + 'db/items.csv') #
+    # newItemsTable = itemsTable.copy()                   #
     #####################################################
 
     # Join to find what needs to be inserted.
     df = pd.merge(
         newItemsTable
         , itemsTable
-        , on='api_id'
+        , on='id'
         , how='left'
         , suffixes=("", "_old")
     )
     # Get the data that needs to be added to the .csv
-    insertQuery = df[df['item_old'].isna()][['item', 'api_id']]
+    insertQuery = df[df['name_old'].isna()][['name', 'id']]
 
     # Insert the new data into the Table. (Repalce with SQL)
     # for _, row in df.iterrows():
     #     val = row['item']
-    #     api_id = row['api_id']
-    #     ItemsTable(item=item, api_id=api_id).save()
+    #     id = row['id']
+    #     ItemsTable(item=item, id=id).save()
     
     # Pandas Version...
-    global GLOBAL_DF
-    GLOBAL_DF = pd.concat([itemsTable, insertQuery])
-    GLOBAL_DF.to_csv(CURR_DIR + 'db/table.csv', index=False)
+    global ITEMS
+    ITEMS = pd.concat([itemsTable, insertQuery])
+    ITEMS.to_csv(CURR_DIR + 'db/items.csv', index=False)
 
-def itemInDatabase(itemName:str):
+
+# Get Info from Item DB
+def itemName(itemKey:str):
+    '''
+    Might not need this if I work with objects but just in case I need it lol.
+    '''
+    global ITEMS
+    val = ITEMS[ITEMS['id'] == int(itemKey)]
+    if (len(val)):
+        return val.values[0][0]
+    return -1
+
+def itemApiId(itemName:str):
     '''
     Function returns either True and the U-ID of the item or -1 if not found.
     '''
     #item = ItemsTable.objects.filter(item=itemName)
     # if (len(queryset)): ....
-    global GLOBAL_DF
-    val  = GLOBAL_DF[(GLOBAL_DF['check item'] == itemName.lower())]
+    global ITEMS
+    val  = ITEMS[(ITEMS['name_check'] == itemName.lower())]
     if (len(val)):
         return val.values[0][1]
     return -1
 
-def searchSqlForItems(itemName:str):
+def postgresSearchItem(itemName:str):
     '''
     This function will be built when Postgres is implemented.
     It will use full text search, a feature of Postgres to search for 
@@ -114,17 +121,10 @@ def searchSqlForItems(itemName:str):
     '''
     pass
 
-def itemName(itemKey:str):
-    '''
-    Might not need this if I work with objects but just in case I need it lol.
-    '''
-    global GLOBAL_DF
-    val = GLOBAL_DF[GLOBAL_DF['api_id'] == int(itemKey)]
-    if (len(val)):
-        return val.values[0][0]
-    return -1
 
-def getItemData(itemKey:str) :
+
+# Api Tools
+def get_currentItemCost(itemKey:str) :
     url = f'https://prices.runescape.wiki/api/v1/osrs/latest/?id={itemKey}'
     response = requests.get(url, headers=HEADERS)
 
@@ -132,6 +132,10 @@ def getItemData(itemKey:str) :
     print(response.json()['data'][itemKey])
     return response.json()['data'][itemKey]
 
+def get_itemInformation(itemKey:str):
+    pass
+
+# Misc, might delete later
 def currItemFormat(itemKey:str, itemData: dict):
     '''
     Used to just format what I anticipate. the output should be.

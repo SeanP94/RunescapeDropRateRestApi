@@ -5,17 +5,21 @@ It will be deleted once I launch the Django project.
 '''
 
 # Setup
-osrs.itemDatabase()
-
-itemName = None
-itemId = -1
-# while (itemId == -1):
-#     itemName = input("Search for item: ")
-#     itemId = osrs.itemInDatabase(itemName)
-# itemName = input("Search for item: ")
+osrs.itemTableSetup()
+# osrs.itemDetailTableSetup()
 
 
-itemId = str(osrs.itemInDatabase('Air Rune'))
 
-itemData = osrs.getItemData(itemId)
+
+# itemName = None
+# itemId = -1
+# # while (itemId == -1):
+# #     itemName = input("Search for item: ")
+# #     itemId = osrs.itemInDatabase(itemName)
+# # itemName = input("Search for item: ")
+
+
+itemId = str(osrs.itemApiId('Air Rune'))
+
+itemData = osrs.get_currentItemCost(itemId)
 osrs.currItemFormat(itemId, itemData)

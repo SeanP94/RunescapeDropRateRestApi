@@ -1,7 +1,7 @@
 import requests
 import pandas as pd
 import os
-from datetime import datetime
+from datetime import datetime,date
 
 '''
 Functionality of this library:
@@ -35,36 +35,29 @@ def itemTableSetup():
 
     #Uncomment this when you want to work on the API call again. Stop pinging them lol
     
-    # url = 'https://oldschool.runescape.wiki/?title=Module:GEIDs/data.json&action=raw&ctype=application%2Fjson'
-    url = 'https://prices.runescape.wiki/api/v1/osrs/mapping'
-    out = requests.get(url, headers=HEADERS)
-    
-    # newItemsTable = pd.DataFrame.from_dict(out.json(), orient='index') \
-    #                             .reset_index() \
-    #                             .rename(columns={'index':'item', 0:'id'}) \
-    
-    newItemsTable = pd.DataFrame.from_dict(out.json())
-    newItemsTable['name_check'] = newItemsTable['name'].str.lower()
-    # Remove the LAST_UPDATE and LAST_UPDATE_F
-    # newItemsTable.drop(index=[0,1],inplace=True)
+    # url = 'https://prices.runescape.wiki/api/v1/osrs/mapping'
+    # out = requests.get(url, headers=HEADERS)
+    # newItemsTable = pd.DataFrame.from_dict(out.json())
+    # newItemsTable['name_check'] = newItemsTable['name'].str.lower()
 
-    ###############################################
-    ### Code until SQL is implemented in Django ###
-    ###############################################
-    # Dump if file doesnt exist.
 
-    # This part will be replaced by reading in SQL not CSV
-    if (not os.path.exists(CURR_DIR + 'db/items.csv')):
-        newItemsTable.to_csv(CURR_DIR + 'db/items.csv', index=False)
-        itemsTable = newItemsTable.copy()
-    else:
-        itemsTable = pd.read_csv(CURR_DIR + 'db/items.csv')
-    newItemsTable = newItemsTable.copy()
+    # ###############################################
+    # ### Code until SQL is implemented in Django ###
+    # ###############################################
+    # # Dump if file doesnt exist.
+
+    # # This part will be replaced by reading in SQL not CSV
+    # if (not os.path.exists(CURR_DIR + 'db/items.csv')):
+    #     newItemsTable.to_csv(CURR_DIR + 'db/items.csv', index=False)
+    #     itemsTable = newItemsTable.copy()
+    # else:
+    #     itemsTable = pd.read_csv(CURR_DIR + 'db/items.csv')
+    # newItemsTable = newItemsTable.copy()
     
 
     # Temp code, so I stop calling API on every run.. ###
-    # itemsTable = pd.read_csv(CURR_DIR + 'db/items.csv') #
-    # newItemsTable = itemsTable.copy()                   #
+    itemsTable = pd.read_csv(CURR_DIR + 'db/items.csv') #
+    newItemsTable = itemsTable.copy()                   #
     #####################################################
 
     # Join to find what needs to be inserted.
@@ -132,8 +125,29 @@ def get_currentItemCost(itemKey:str) :
     print(response.json()['data'][itemKey])
     return response.json()['data'][itemKey]
 
-def get_itemInformation(itemKey:str):
-    pass
+def get_itemLastYrInfo(itemKey:str):
+    '''
+    Calls the API to get the last 365 days worth of data.
+
+    To Note* You can pass 5m, 1h, 6h, or 24h on the timestep.
+    Im opting to only collect 24h because that's all I really need for what I'm doing.
+    '''
+    url = f'https://prices.runescape.wiki/api/v1/osrs/timeseries?timestep=24h&id={itemKey}'
+    out = requests.get(url, headers=HEADERS)
+
+    queriedData = pd.DataFrame.from_dict(out.json()['data'])
+    queriedData['item_id'] = int(itemKey)
+    queriedData['date'] = queriedData['timestamp'].apply(lambda ts: date.fromtimestamp(ts))
+    queriedData.drop(columns=['timestamp'], inplace=True)
+    
+    currQueriedData = pd.read_csv(CURR_DIR + 'db/price_history.csv')
+    ds = set([(x[0], x[1]) for x in currQueriedData[['item_id','date']].values])
+    
+    mask = queriedData.apply(lambda row: False if (int(row['item_id']), str(row['date'])) in ds else True,axis=1)
+    updateData = queriedData[mask].copy()
+    # Temp Pandas save.....
+    pd.concat([currQueriedData, updateData]).to_csv(CURR_DIR + 'db/price_history.csv', index=False)
+    
 
 # Misc, might delete later
 def currItemFormat(itemKey:str, itemData: dict):
@@ -146,3 +160,5 @@ def currItemFormat(itemKey:str, itemData: dict):
     print(f"Item: {itemName(itemKey)}".ljust(50))
     print(f"Item: {itemData['high']} gp High at {highTime}".ljust(100))
     print(f"Item: {itemData['low']} gp Low at {lowTime}".ljust(100))
+
+

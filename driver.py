@@ -23,3 +23,6 @@ itemId = str(osrs.itemApiId('Air Rune'))
 
 itemData = osrs.get_currentItemCost(itemId)
 osrs.currItemFormat(itemId, itemData)
+print('\n\n\n')
+
+osrs.get_itemLastYrInfo(itemId)

@@ -1,7 +1,36 @@
 # RunescapeDropRateRestApi
-An API project for interacting with the OSRS Wiki for boss drops.
+
+An API project for interacting with the OSRS Wiki for Grand Exchange informations.
+
+This project is meant to read their external API and store data. 
+The project will be a REST Api that I can interact with, that also has a PostGRES SQL database.
+
+Postgres is going to be optimal, so that I can implement full Text search (Since some things like Home Teleports are called House Teleport Tablets or item states like Willow Shortbow (u) are terrible...)
 
 
+This tool will allow for me to quickly pull together Item cost data 
+
+
+# Project Setup 
+---
+Current State:
+
+Clone Repository from github.
+
+Make sure you have Python downloaded, and virtual environtments (pip install virtualenv)
+From the command line type
+
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+and from there the project is setup 
+(This will get a bit more complicated once PostGres and Django are setup, but I'm going to make a docker-compose file, so it shouldn't be too rough)
+
+
+
+ Below are just notes for myself.
+---
 # Get Main Project
 https://oldschool.runescape.wiki/w/RuneScape:Real-time_Prices
 

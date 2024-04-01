@@ -8,10 +8,10 @@ Functionality of this library:
 
 [X] Get new items from APi
 [X] Find Item in API  
-[ ] Get item data from API  
-[ ] Get last X days from API...         ##                     ### Here
-[ ] Store item data from API & possible ^^
-[ ] Get last X days from SQLTable and what I dont have ask API ^^^
+[X] Get item data from API  
+[X] Get last X days from API...         ##                     ### Here
+[X] Store item data from API & possible ^^
+[X] Get last X days from SQLTable and what I dont have ask API ^^^
 
 '''
 
@@ -115,7 +115,6 @@ def postgresSearchItem(itemName:str):
     pass
 
 
-
 # Api Tools
 def get_currentItemCost(itemKey:str) :
     url = f'https://prices.runescape.wiki/api/v1/osrs/latest/?id={itemKey}'
@@ -148,7 +147,6 @@ def get_itemLastYrInfo(itemKey:str):
     # Temp Pandas save.....
     pd.concat([currQueriedData, updateData]).to_csv(CURR_DIR + 'db/price_history.csv', index=False)
     
-
 # Misc, might delete later
 def currItemFormat(itemKey:str, itemData: dict):
     '''
@@ -160,5 +158,3 @@ def currItemFormat(itemKey:str, itemData: dict):
     print(f"Item: {itemName(itemKey)}".ljust(50))
     print(f"Item: {itemData['high']} gp High at {highTime}".ljust(100))
     print(f"Item: {itemData['low']} gp Low at {lowTime}".ljust(100))
-
-

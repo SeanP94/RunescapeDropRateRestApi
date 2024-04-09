@@ -154,6 +154,18 @@ def get_itemPastYrInfo(itemKey:str):
         print(f"Error: {e}")
 
 
+def get_last24hrs():
+    '''A command that will call the latest from the API.'''
+    url = 'https://prices.runescape.wiki/api/v1/osrs/latest'
+    response = requests.get(url, headers=HEADERS)
+    # Pandas for funsies.
+    dataSet = pd.DataFrame.from_dict(response.json()['data'] ,orient='index')
+    # For now return them into a row format. Probably do JSON later.
+    return dataSet.reset_index().values
+
+    
+
+
 # Misc tools
 def currItemFormat(itemKey:str, itemData: dict):
     '''
@@ -165,3 +177,5 @@ def currItemFormat(itemKey:str, itemData: dict):
     print(f"Item: {itemName(itemKey)}".ljust(50))
     print(f"Daily High: {itemData['high']} gp at {highTime}".ljust(100))
     print(f"Daily Low: {itemData['low']} gp at {lowTime}".ljust(100))
+
+

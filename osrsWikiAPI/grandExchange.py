@@ -2,7 +2,7 @@ import requests
 import pandas as pd
 import os
 from datetime import datetime,date
-
+from time import sleep
 '''
 Functionality of this library:
 
@@ -159,11 +159,30 @@ def get_last24hrs():
     url = 'https://prices.runescape.wiki/api/v1/osrs/latest'
     response = requests.get(url, headers=HEADERS)
     # Pandas for funsies.
-    dataSet = pd.DataFrame.from_dict(response.json()['data'] ,orient='index')
-    # For now return them into a row format. Probably do JSON later.
-    return dataSet.reset_index().values
-
     
+    dataSet = pd.DataFrame.from_dict(response.json()['data'] ,orient='index')
+    dataSet['TimeStampRan'] = int(datetime.now().timestamp())
+    # For now return them into a row format. Probably do JSON later.
+    return dataSet.reset_index().to_numpy()
+
+def get_daily24hrsOverNDays(n:int):
+    '''a command that will call X amount of times from the API
+        Functions use is to fill out database.
+    '''
+    ts = int(datetime.now().timestamp())
+    ts -= ts%86400 + 86400 # Data isnt backed up for last 2 days on APi server.. So start a little further back
+    url =  lambda ts: f'https://prices.runescape.wiki/api/v1/osrs/24h?timestamp={ts}'
+    output = []
+    for i in range(n):
+        currentUrl = url(ts)
+        response = requests.get(currentUrl, headers=HEADERS)
+        tempDict = response.json()['data']
+        for key, value in tempDict.items():
+            output += [[key] + list(value.values()) + [ts]]
+        sleep(2)
+        ts -= 3600 * 24
+    print(output)
+    return output
 
 
 # Misc tools
@@ -177,5 +196,4 @@ def currItemFormat(itemKey:str, itemData: dict):
     print(f"Item: {itemName(itemKey)}".ljust(50))
     print(f"Daily High: {itemData['high']} gp at {highTime}".ljust(100))
     print(f"Daily Low: {itemData['low']} gp at {lowTime}".ljust(100))
-
 
